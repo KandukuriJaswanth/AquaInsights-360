@@ -1,0 +1,686 @@
+
+# ================================================================
+# DRINKING WATER BOTTLE DATASET GENERATOR
+# Dataset size: 1 Crore (10,000,000) rows
+# Columns: Exactly 55
+# Format: Multiple CSV files
+# Platform: Python, Jupyter Notebook, Google Colab, Windows
+# ================================================================
+
+import os
+import random
+import time
+from pathlib import Path
+from datetime import datetime
+
+import numpy as np
+import pandas as pd
+
+# ================================================================
+# 1. CONFIGURATION
+# ================================================================
+
+TOTAL_ROWS = 10_000_000
+CHUNK_SIZE = 250_000
+OUTPUT_DIR = Path("Drinking_Water_Dataset")
+RANDOM_SEED = 42
+
+START_DATE = "2023-01-01"
+END_DATE = "2026-10-25"
+
+SAVE_CSV = True
+SAVE_PARQUET = False  # Set True if pyarrow is installed
+
+OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+
+random.seed(RANDOM_SEED)
+np.random.seed(RANDOM_SEED)
+
+rng = np.random.default_rng(RANDOM_SEED)
+
+print("=" * 70)
+print("DRINKING WATER DATASET GENERATOR")
+print("=" * 70)
+print(f"Target rows : {TOTAL_ROWS:,}")
+print(f"Chunk size  : {CHUNK_SIZE:,}")
+print(f"Output      : {OUTPUT_DIR.resolve()}")
+print()
+
+
+# ================================================================
+# 2. MASTER DATA
+# ================================================================
+
+companies = [
+    "AquaPure Beverages", "Crystal Springs India",
+    "BlueDrop Industries", "FreshFlow Water Co",
+    "NatureSip Beverages", "ClearWave Products",
+    "Himalayan Source Foods", "OceanMist Beverages",
+    "PureLife Water Company", "EverFresh Bottling",
+    "AquaTrust India", "SilverStream Beverages",
+    "GreenSpring Water", "RoyalDrop Industries",
+    "LifeSource Beverages", "BlueMountain Waters",
+    "PrimeAqua Products", "NaturalFlow India",
+    "CrystalPeak Beverages", "Sunrise Water Works"
+]
+
+brands = [
+    "AquaPure", "CrystalDrop", "BlueWave", "FreshSip",
+    "NatureSpring", "ClearLife", "HimalayaFresh",
+    "OceanBlue", "PureLife", "EverClear", "AquaTrust",
+    "SilverStream", "GreenSpring", "RoyalDrop",
+    "LifeSource", "BlueMountain", "PrimeAqua",
+    "NaturalFlow", "CrystalPeak", "Sunrise Aqua",
+    "DailyDrop", "HydraFresh", "WaterNest", "AquaLeaf",
+    "PureSplash", "SpringVale", "BlueRiver", "AquaNest"
+]
+
+categories = [
+    "Packaged Drinking Water",
+    "Mineral Water",
+    "Alkaline Water",
+    "Sparkling Water",
+    "Natural Spring Water"
+]
+
+sub_categories = [
+    "Regular Drinking Water", "Premium Mineral Water",
+    "Alkaline Drinking Water", "Carbonated Water",
+    "Natural Spring Water", "Bulk Water Can",
+    "Travel Water Bottle", "Family Pack Water",
+    "Office Water Supply", "Sports Hydration Water"
+]
+
+product_adjectives = [
+    "Pure", "Fresh", "Natural", "Crystal", "Premium",
+    "Classic", "Daily", "Active", "Mountain", "Royal",
+    "Essential", "Select", "Ultra", "Eco", "Smart",
+    "Healthy", "Clear", "Blue", "Silver", "Golden"
+]
+
+product_nouns = [
+    "Water", "Spring Water", "Mineral Water",
+    "Drinking Water", "Hydration Water",
+    "Aqua Water", "Natural Water", "Pure Water"
+]
+
+pack_sizes = [
+    ("250 ml", 250),
+    ("300 ml", 300),
+    ("500 ml", 500),
+    ("750 ml", 750),
+    ("1 L", 1000),
+    ("1.5 L", 1500),
+    ("2 L", 2000),
+    ("5 L", 5000),
+    ("10 L", 10000),
+    ("20 L", 20000)
+]
+
+packaging_types = [
+    "PET Bottle", "Recycled PET Bottle", "Glass Bottle",
+    "Reusable Bottle", "Water Can", "Bulk Jar",
+    "Carton Pack", "Aluminium Bottle"
+]
+
+bottle_materials = [
+    "PET", "rPET", "Glass", "HDPE",
+    "Aluminium", "Paper Composite"
+]
+
+cap_types = [
+    "Standard Screw Cap", "Tamper-Evident Cap",
+    "Sports Cap", "Flip-Top Cap",
+    "Child-Resistant Cap", "Dispenser Seal"
+]
+
+water_sources = [
+    "Groundwater", "Municipal Supply", "Spring Source",
+    "Mountain Source", "Surface Water", "RO Feed Water"
+]
+
+purification_methods = [
+    "Reverse Osmosis", "UV Treatment",
+    "Ozonation", "RO + UV", "RO + UV + Ozonation",
+    "Microfiltration", "Mineral Balancing",
+    "Carbon Filtration", "Multi-Stage Filtration"
+]
+
+water_types = [
+    "Packaged Drinking Water", "Mineral Water",
+    "Alkaline Water", "Sparkling Water",
+    "Natural Spring Water"
+]
+
+price_categories = [
+    "Budget", "Standard", "Premium", "Luxury"
+]
+
+seller_names = [
+    "AquaMart India", "FreshBasket", "DailyNeeds Store",
+    "WaterWorld Retail", "Hydration Hub", "NatureCart",
+    "Prime Grocery", "City Supermarket", "QuickBuy India",
+    "PureWater Distributors", "Metro Wholesale",
+    "GreenBasket Retail", "SmartChoice Store",
+    "Family Needs Market", "BlueDrop Distributors"
+]
+
+marketplaces = [
+    "Company Website", "Online Grocery", "Marketplace",
+    "Supermarket", "Local Retailer", "Wholesale",
+    "Distributor", "Convenience Store"
+]
+
+marketplace_urls = [
+    "https://example.com/aqua",
+    "https://example.com/water",
+    "https://example.com/store",
+    "https://example.com/products",
+    "https://example.com/marketplace",
+    "https://example.com/grocery"
+]
+
+availability_values = [
+    "In Stock", "Limited Stock", "Out of Stock",
+    "Pre-Order", "Seasonal Availability"
+]
+
+delivery_types = [
+    "Standard Delivery", "Same-Day Delivery",
+    "Next-Day Delivery", "Store Pickup",
+    "Bulk Delivery", "Distributor Delivery"
+]
+
+states_cities = {
+    "Telangana": ["Hyderabad", "Warangal", "Khammam", "Karimnagar",
+                  "Nizamabad", "Nalgonda", "Siddipet"],
+    "Andhra Pradesh": ["Vijayawada", "Visakhapatnam", "Guntur",
+                       "Tirupati", "Nellore", "Kurnool"],
+    "Karnataka": ["Bengaluru", "Mysuru", "Mangaluru",
+                  "Hubballi", "Belagavi", "Kalaburagi"],
+    "Tamil Nadu": ["Chennai", "Coimbatore", "Madurai",
+                   "Salem", "Tiruchirappalli", "Vellore"],
+    "Maharashtra": ["Mumbai", "Pune", "Nagpur",
+                    "Nashik", "Thane", "Kolhapur"],
+    "Delhi": ["New Delhi", "Dwarka", "Rohini", "Saket"],
+    "Uttar Pradesh": ["Lucknow", "Kanpur", "Noida",
+                      "Agra", "Varanasi", "Prayagraj"],
+    "Gujarat": ["Ahmedabad", "Surat", "Vadodara",
+                "Rajkot", "Bhavnagar"],
+    "Rajasthan": ["Jaipur", "Jodhpur", "Udaipur",
+                  "Kota", "Ajmer"],
+    "West Bengal": ["Kolkata", "Howrah", "Durgapur",
+                    "Siliguri", "Asansol"],
+    "Kerala": ["Kochi", "Thiruvananthapuram", "Kozhikode",
+               "Thrissur", "Kollam"],
+    "Madhya Pradesh": ["Bhopal", "Indore", "Jabalpur",
+                       "Gwalior", "Ujjain"],
+    "Bihar": ["Patna", "Gaya", "Muzaffarpur",
+              "Bhagalpur", "Darbhanga"],
+    "Odisha": ["Bhubaneswar", "Cuttack", "Rourkela",
+               "Puri", "Sambalpur"],
+    "Punjab": ["Ludhiana", "Amritsar", "Jalandhar",
+               "Patiala", "Bathinda"],
+    "Haryana": ["Gurugram", "Faridabad", "Panipat",
+                "Hisar", "Karnal"],
+    "Assam": ["Guwahati", "Dibrugarh", "Silchar",
+              "Jorhat", "Tezpur"],
+    "Jharkhand": ["Ranchi", "Jamshedpur", "Dhanbad",
+                  "Bokaro", "Deoghar"],
+    "Chhattisgarh": ["Raipur", "Bilaspur", "Durg",
+                     "Korba", "Rajnandgaon"],
+    "Uttarakhand": ["Dehradun", "Haridwar", "Roorkee",
+                    "Haldwani", "Rishikesh"]
+}
+
+state_names = list(states_cities.keys())
+
+regions = {
+    "North": ["Delhi", "Uttar Pradesh", "Punjab", "Haryana",
+              "Rajasthan", "Uttarakhand"],
+    "South": ["Telangana", "Andhra Pradesh", "Karnataka",
+              "Tamil Nadu", "Kerala"],
+    "East": ["West Bengal", "Bihar", "Odisha",
+             "Assam", "Jharkhand"],
+    "West": ["Maharashtra", "Gujarat"],
+    "Central": ["Madhya Pradesh", "Chhattisgarh"]
+}
+
+certification_options = [
+    "FSSAI", "ISO 22000", "ISO 9001", "BIS",
+    "HACCP", "None Listed", "FSSAI;ISO 22000",
+    "FSSAI;BIS", "ISO 9001;HACCP",
+    "FSSAI;ISO 22000;HACCP"
+]
+
+storage_advice_options = [
+    "Store in a cool, dry place",
+    "Keep away from direct sunlight",
+    "Store at room temperature",
+    "Keep sealed until use",
+    "Avoid exposure to excessive heat",
+    "Store upright in a clean location"
+]
+
+
+# ================================================================
+# 3. HELPER FUNCTIONS
+# ================================================================
+
+def choose(values, size):
+    """Randomly select values from a list."""
+    return rng.choice(values, size=size)
+
+
+def random_dates(size):
+    """Generate dates within the configured date range."""
+    start = np.datetime64(START_DATE, "D")
+    end = np.datetime64(END_DATE, "D")
+    days = int((end - start).astype(int))
+    offsets = rng.integers(0, days + 1, size=size)
+    return start + offsets.astype("timedelta64[D]")
+
+
+def build_region(states):
+    """Map states to broad Indian regions."""
+    state_to_region = {}
+    for region_name, region_states in regions.items():
+        for state in region_states:
+            state_to_region[state] = region_name
+    return np.array([state_to_region[s] for s in states])
+
+
+def make_batch(start_row_id, size):
+    """Create one batch with exactly 55 columns."""
+
+    # ------------------------------------------------------------
+    # Product identity
+    # ------------------------------------------------------------
+
+    row_ids = np.arange(start_row_id, start_row_id + size,
+                        dtype=np.int64)
+
+    product_numbers = rng.integers(1, 250_001, size=size)
+
+    product_ids = np.array([
+        f"WTR-{n:07d}" for n in product_numbers
+    ], dtype=object)
+
+    company = choose(companies, size)
+    brand = choose(brands, size)
+    category = choose(categories, size)
+    sub_category = choose(sub_categories, size)
+
+    adjective = choose(product_adjectives, size)
+    noun = choose(product_nouns, size)
+
+    product_names = np.char.add(
+        np.char.add(adjective.astype(str), " "),
+        noun.astype(str)
+    )
+
+    # ------------------------------------------------------------
+    # Pack size and packaging
+    # ------------------------------------------------------------
+
+    pack_index = rng.integers(0, len(pack_sizes), size=size)
+
+    pack_size_label = np.array(
+        [pack_sizes[i][0] for i in pack_index],
+        dtype=object
+    )
+
+    volume_ml = np.array(
+        [pack_sizes[i][1] for i in pack_index],
+        dtype=np.int32
+    )
+
+    bottle_count = rng.choice(
+        [1, 2, 4, 6, 12, 24, 48],
+        size=size
+    )
+
+    total_volume_l = np.round(
+        volume_ml * bottle_count / 1000.0, 3
+    )
+
+    packaging_type = choose(packaging_types, size)
+    bottle_material = choose(bottle_materials, size)
+    cap_type = choose(cap_types, size)
+
+    # ------------------------------------------------------------
+    # Water profile
+    # ------------------------------------------------------------
+
+    water_source = choose(water_sources, size)
+    purification_method = choose(purification_methods, size)
+    water_type = choose(water_types, size)
+
+    tds = rng.integers(20, 501, size=size)
+    ph_value = np.round(rng.uniform(6.5, 8.5, size=size), 2)
+
+    # These are simulated attributes, not lab measurements.
+    # ------------------------------------------------------------
+    # Pricing
+    # ------------------------------------------------------------
+
+    # Base price per litre with size and pack count variation.
+    base_price_per_litre = rng.uniform(8, 180, size=size)
+
+    mrp = np.maximum(
+        5,
+        np.round(base_price_per_litre * total_volume_l, 2)
+    )
+
+    discount_percent = np.round(
+        rng.uniform(0, 35, size=size), 2
+    )
+
+    selling_price = np.round(
+        mrp * (1 - discount_percent / 100), 2
+    )
+
+    price_per_litre = np.round(
+        selling_price / np.maximum(total_volume_l, 0.001), 2
+    )
+
+    price_category = np.select(
+        [
+            price_per_litre < 20,
+            price_per_litre < 50,
+            price_per_litre < 100
+        ],
+        ["Budget", "Standard", "Premium"],
+        default="Luxury"
+    )
+
+    # ------------------------------------------------------------
+    # Reviews and sales channels
+    # ------------------------------------------------------------
+
+    rating = np.round(rng.uniform(2.5, 5.0, size=size), 1)
+    review_count = rng.integers(0, 50_001, size=size)
+
+    seller_name = choose(seller_names, size)
+    marketplace = choose(marketplaces, size)
+    marketplace_url = choose(marketplace_urls, size)
+    availability = choose(availability_values, size)
+
+    # ------------------------------------------------------------
+    # Location
+    # ------------------------------------------------------------
+
+    state = choose(state_names, size)
+
+    city = np.array([
+        rng.choice(states_cities[s]) for s in state
+    ], dtype=object)
+
+    region = build_region(state)
+
+    delivery_type = choose(delivery_types, size)
+
+    # ------------------------------------------------------------
+    # Product attributes and certification labels
+    # ------------------------------------------------------------
+
+    is_recyclable = choose([True, False], size)
+    is_premium_brand = choose([True, False], size)
+    is_alkaline = (water_type == "Alkaline Water")
+    is_sparkling = (water_type == "Sparkling Water")
+
+    fssai_status = choose(
+        ["Listed in synthetic record", "Not listed", "Unknown"],
+        size
+    )
+
+    certifications = choose(certification_options, size)
+
+    certification_count = np.array([
+        0 if value == "None Listed"
+        else len(value.split(";"))
+        for value in certifications
+    ], dtype=np.int8)
+
+    manufacturing_state = choose(state_names, size)
+
+    shelf_life_months = rng.choice(
+        [3, 6, 9, 12, 18, 24],
+        size=size
+    )
+
+    storage_advice = choose(storage_advice_options, size)
+
+    # ------------------------------------------------------------
+    # Dates and sales metrics
+    # ------------------------------------------------------------
+
+    order_date = random_dates(size)
+
+    order_date_pd = pd.to_datetime(order_date)
+
+    order_month = order_date_pd.month.to_numpy()
+    order_quarter = order_date_pd.quarter.to_numpy()
+    order_year = order_date_pd.year.to_numpy()
+    day_of_week = order_date_pd.day_name().to_numpy()
+
+    is_weekend_order = np.isin(
+        day_of_week, ["Saturday", "Sunday"]
+    )
+
+    units_sold = rng.integers(1, 501, size=size)
+
+    revenue = np.round(selling_price * units_sold, 2)
+
+    estimated_margin = np.round(
+        rng.uniform(3, 45, size=size), 2
+    )
+
+    return_rate = np.round(
+        rng.uniform(0, 12, size=size), 2
+    )
+
+    synthetic_record_flag = np.full(
+        size, "SYNTHETIC", dtype=object
+    )
+
+    # ------------------------------------------------------------
+    # Assemble columns in a fixed order
+    # ------------------------------------------------------------
+
+    data = {
+        "Row_ID": row_ids,
+        "Product_ID": product_ids,
+        "Company_Name": company,
+        "Brand_Name": brand,
+        "Category": category,
+        "Sub_Category": sub_category,
+        "Product_Name": product_names,
+        "Pack_Size_Label": pack_size_label,
+        "Volume_ml": volume_ml,
+        "Bottle_Count": bottle_count,
+        "Total_Volume_L": total_volume_l,
+        "Packaging_Type": packaging_type,
+        "Bottle_Material": bottle_material,
+        "Cap_Type": cap_type,
+        "Water_Source": water_source,
+        "Purification_Method": purification_method,
+        "Water_Type": water_type,
+        "Mineral_Content_TDS_mg_L": tds,
+        "pH_Value": ph_value,
+        "MRP_INR": mrp,
+        "Selling_Price_INR": selling_price,
+        "Discount_Percent": discount_percent,
+        "Price_Per_Litre_INR": price_per_litre,
+        "Price_Category": price_category,
+        "Rating": rating,
+        "Review_Count": review_count,
+        "Seller_Name": seller_name,
+        "Marketplace": marketplace,
+        "Marketplace_URL": marketplace_url,
+        "Availability": availability,
+        "State": state,
+        "City": city,
+        "Region": region,
+        "Delivery_Type": delivery_type,
+        "Is_Recyclable": is_recyclable,
+        "Is_Premium_Brand": is_premium_brand,
+        "Is_Alkaline": is_alkaline,
+        "Is_Sparkling": is_sparkling,
+        "FSSAI_License_Status": fssai_status,
+        "Certifications": certifications,
+        "Certification_Count": certification_count,
+        "Manufacturing_State": manufacturing_state,
+        "Shelf_Life_Months": shelf_life_months,
+        "Storage_Advice": storage_advice,
+        "Order_Date": order_date_pd,
+        "Order_Month": order_month,
+        "Order_Quarter": order_quarter,
+        "Order_Year": order_year,
+        "Day_of_Week": day_of_week,
+        "Is_Weekend_Order": is_weekend_order,
+        "Units_Sold": units_sold,
+        "Revenue_INR": revenue,
+        "Estimated_Margin_Percent": estimated_margin,
+        "Return_Rate_Percent": return_rate,
+        "Synthetic_Record_Flag": synthetic_record_flag
+    }
+
+    df = pd.DataFrame(data)
+
+    if df.shape[1] != 55:
+        raise ValueError(
+            f"Expected 55 columns, found {df.shape[1]}"
+        )
+
+    if df["Row_ID"].duplicated().any():
+        raise ValueError("Duplicate Row_ID values detected.")
+
+    return df
+
+
+# ================================================================
+# 4. GENERATE DATASET IN CHUNKS
+# ================================================================
+
+def generate_dataset():
+    start_time = time.time()
+    total_written = 0
+    part_number = 1
+
+    csv_paths = []
+
+    print("Starting dataset generation...")
+    print("Do not stop the program until it finishes.")
+    print()
+
+    for start in range(1, TOTAL_ROWS + 1, CHUNK_SIZE):
+
+        current_size = min(
+            CHUNK_SIZE,
+            TOTAL_ROWS - start + 1
+        )
+
+        df = make_batch(start, current_size)
+
+        if df.shape != (current_size, 55):
+            raise ValueError(
+                f"Unexpected shape: {df.shape}"
+            )
+
+        if SAVE_CSV:
+            file_path = OUTPUT_DIR / (
+                f"drinking_water_part_{part_number:04d}.csv"
+            )
+
+            df.to_csv(
+                file_path,
+                index=False,
+                encoding="utf-8",
+                date_format="%Y-%m-%d"
+            )
+
+            csv_paths.append(str(file_path))
+
+        if SAVE_PARQUET:
+            try:
+                parquet_path = OUTPUT_DIR / (
+                    f"drinking_water_part_{part_number:04d}.parquet"
+                )
+
+                df.to_parquet(
+                    parquet_path,
+                    index=False,
+                    engine="pyarrow"
+                )
+
+            except ImportError as exc:
+                raise ImportError(
+                    "Install Parquet support with: "
+                    "pip install pyarrow"
+                ) from exc
+
+        total_written += len(df)
+
+        elapsed = time.time() - start_time
+        rate = total_written / max(elapsed, 0.001)
+
+        print(
+            f"Part {part_number:04d} | "
+            f"Rows generated: {total_written:,}/{TOTAL_ROWS:,} | "
+            f"Current batch: {current_size:,} | "
+            f"Speed: {rate:,.0f} rows/sec"
+        )
+
+        del df
+        part_number += 1
+
+    elapsed = time.time() - start_time
+
+    # Save a manifest containing output files and settings.
+    manifest = {
+        "dataset_name": "Synthetic Drinking Water Dataset",
+        "target_rows": TOTAL_ROWS,
+        "generated_rows": total_written,
+        "column_count": 55,
+        "chunk_size": CHUNK_SIZE,
+        "start_date": START_DATE,
+        "end_date": END_DATE,
+        "random_seed": RANDOM_SEED,
+        "synthetic_data": True,
+        "csv_files": csv_paths,
+        "generation_seconds": round(elapsed, 2)
+    }
+
+    manifest_path = OUTPUT_DIR / "dataset_manifest.json"
+
+    pd.Series(manifest).to_json(
+        manifest_path,
+        indent=2,
+        force_ascii=False
+    )
+
+    print()
+    print("=" * 70)
+    print("DATASET GENERATION COMPLETE")
+    print("=" * 70)
+    print(f"Total rows       : {total_written:,}")
+    print("Columns per file : 55")
+    print(f"CSV files        : {len(csv_paths)}")
+    print(f"Elapsed time     : {elapsed / 60:.2f} minutes")
+    print(f"Output folder    : {OUTPUT_DIR.resolve()}")
+    print(f"Manifest         : {manifest_path.resolve()}")
+    print()
+    print("Every row has a unique Row_ID.")
+    print("All records are labelled SYNTHETIC.")
+    print("Use the CSV files directly in Power BI or Fabric.")
+
+    return csv_paths
+
+
+# ================================================================
+# 5. RUN
+# ================================================================
+
+if __name__ == "__main__":
+    generate_dataset()
